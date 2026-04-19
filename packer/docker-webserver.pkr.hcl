@@ -106,9 +106,7 @@ build {
     ]
   }
 
-  # ----------------------------------------------------------
   # STEP 2 — Ansible: install Apache, Python packages, custom config
-  # ----------------------------------------------------------
   provisioner "ansible" {
     playbook_file   = "../ansible/playbooks/webserver.yml"
     user            = "root"
@@ -121,13 +119,16 @@ build {
       "ANSIBLE_FORCE_COLOR=1",
       "ANSIBLE_HOST_KEY_CHECKING=False",
       "ANSIBLE_ROLES_PATH=../ansible/roles",
-      "ANSIBLE_STDOUT_CALLBACK=yaml"
+      "ANSIBLE_REMOTE_TMP=/tmp/.ansible/tmp",
+      "ANSIBLE_LOCAL_TEMP=/tmp/.ansible/local",
+      "ANSIBLE_SSH_PIPELINING=True",
+      "ANSIBLE_CONFIG=../ansible.cfg",
+      "LANG=en_US.UTF-8",
+      "LC_ALL=en_US.UTF-8"
     ]
   }
 
-  # ----------------------------------------------------------
   # STEP 3 — Ansible: security updates and hardening
-  # ----------------------------------------------------------
   provisioner "ansible" {
     playbook_file   = "../ansible/playbooks/security.yml"
     user            = "root"
@@ -139,7 +140,12 @@ build {
       "ANSIBLE_FORCE_COLOR=1",
       "ANSIBLE_HOST_KEY_CHECKING=False",
       "ANSIBLE_ROLES_PATH=../ansible/roles",
-      "ANSIBLE_STDOUT_CALLBACK=yaml"
+      "ANSIBLE_REMOTE_TMP=/tmp/.ansible/tmp",
+      "ANSIBLE_LOCAL_TEMP=/tmp/.ansible/local",
+      "ANSIBLE_SSH_PIPELINING=True",
+      "ANSIBLE_CONFIG=../ansible.cfg",
+      "LANG=en_US.UTF-8",
+      "LC_ALL=en_US.UTF-8"
     ]
   }
 
