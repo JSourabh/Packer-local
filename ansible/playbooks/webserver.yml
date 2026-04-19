@@ -1,0 +1,7 @@
+---
+- name: Configure Apache and Python image
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - webserver

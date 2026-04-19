@@ -1,0 +1,54 @@
+---
+- name: Run full dist-upgrade for latest security patches
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+
+- name: Install unattended-upgrades for future auto-patching
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+
+- name: Configure automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Remove packages that are no longer required
+  ansible.builtin.apt:
+    autoremove: true
+    purge: true
+
+- name: Disable root SSH login (sshd_config hardening)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+  ignore_errors: true
+
+- name: Set secure permissions on /etc/passwd
+  ansible.builtin.file:
+    path: /etc/passwd
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Set secure permissions on /etc/shadow
+  ansible.builtin.file:
+    path: /etc/shadow
+    owner: root
+    group: shadow
+    mode: '0640'
+
+- name: Clear apt cache to reduce image size
+  ansible.builtin.file:
+    path: /var/lib/apt/lists
+    state: absent

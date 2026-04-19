@@ -1,0 +1,20 @@
+# Hide Apache version and OS from response headers
+ServerTokens Prod
+ServerSignature Off
+
+# Disable TRACE method (prevents cross-site tracing attacks)
+TraceEnable Off
+
+# Disable ETag (prevents inode information leakage)
+FileETag None
+
+# Timeout tuning
+Timeout 30
+KeepAlive On
+MaxKeepAliveRequests 100
+KeepAliveTimeout 5
+
+# Restrict access to sensitive files
+<FilesMatch "^(\.htaccess|\.htpasswd|\.git|Makefile|README.*)$">
+    Require all denied
+</FilesMatch>
