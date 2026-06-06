@@ -1,12 +1,5 @@
-# ============================================================
-# Packer HCL Template — Docker Web Server Image
-# Tools  : Apache, Python 3, pip, Flask
-# Provisioner: Ansible
-# ============================================================
-
 packer {
   required_version = ">= 1.10.0"
-
   required_plugins {
     docker = {
       version = ">= 1.0.9"
@@ -24,70 +17,45 @@ packer {
 # ============================================================
 
 variable "base_image" {
-  description = "Base Docker image to use"
-  type        = string
-  default     = "ubuntu:22.04"
+  type    = string
+  default = "ubuntu:22.04"
 }
 
 variable "image_name" {
-  description = "Name of the output Docker image"
-  type        = string
-  default     = "packer-webserver"
+  type    = string
+  default = "packer-webserver"
 }
 
 variable "image_tag" {
-  description = "Tag for the output Docker image"
-  type        = string
-  default     = "latest"
+  type    = string
+  default = "latest"
 }
 
 variable "build_date" {
-  description = "Build date label injected by CI or manually"
-  type        = string
-  default     = ""
-}
-
-variable "ansible_verbosity" {
-  description = "Ansible verbosity flag e.g. -v -vv -vvv"
-  type        = string
-  default     = ""
+  type    = string
+  default = ""
 }
 
 # ============================================================
-# LOCALS — derived values calculated at build time
-# ============================================================
-
-locals {
-  timestamp = formatdate("YYYYMMDD-HHmmss", timestamp())
-  final_tag = var.image_tag != "latest" ? var.image_tag : local.timestamp
-}
-
-# ============================================================
-# SOURCE BLOCK — Docker builder
+# SOURCE
 # ============================================================
 
 source "docker" "ubuntu_webserver" {
   image  = var.base_image
-  commit = true   # commit the finished container as a reusable image
-
-  # OCI labels and runtime defaults baked into the image
+  commit = true
   changes = [
     "EXPOSE 80",
     "ENV DEBIAN_FRONTEND=noninteractive",
-    "ENV APACHE_LOG_DIR=/var/log/apache2",
     "LABEL maintainer=sysadmin@company.com",
     "LABEL org.opencontainers.image.title=${var.image_name}",
-    "LABEL org.opencontainers.image.description=Hardened Apache Python web server",
     "LABEL org.opencontainers.image.created=${var.build_date}",
     "CMD [\"/usr/sbin/apache2ctl\", \"-D\", \"FOREGROUND\"]"
   ]
-
-  # Keep the container running so Ansible can connect
   run_command = ["-d", "-i", "-t", "--entrypoint=/bin/bash", "{{.Image}}"]
 }
 
 # ============================================================
-# BUILD BLOCK — Provisioners run in order
+# BUILD
 # ============================================================
 
 build {
@@ -95,91 +63,72 @@ build {
   sources = ["source.docker.ubuntu_webserver"]
 
   # ----------------------------------------------------------
-  # STEP 1 — Bootstrap Python so Ansible can talk to the container
+  # STEP 1 — Install Python3 + Ansible INSIDE the container
   # ----------------------------------------------------------
   provisioner "shell" {
     inline = [
+      "export DEBIAN_FRONTEND=noninteractive",
       "apt-get update -qq",
-      "apt-get install -y --no-install-recommends python3 python3-pip sudo",
+      "apt-get install -y --no-install-recommends python3 python3-pip sudo software-properties-common gnupg curl ca-certificates",
       "ln -sf /usr/bin/python3 /usr/bin/python",
-      "echo '>>> Python bootstrap complete'"
+      "pip3 install --break-system-packages ansible 2>/dev/null || pip3 install ansible",
+      "ansible --version",
+      "echo '>>> Bootstrap complete'"
     ]
   }
 
-  # STEP 2 — Ansible: install Apache, Python packages, custom config
-  provisioner "ansible" {
+  # ----------------------------------------------------------
+  # STEP 2 — Copy Ansible playbooks and roles into the container
+  #          then run ansible-local
+  # ----------------------------------------------------------
+  provisioner "ansible-local" {
     playbook_file   = "../ansible/playbooks/webserver.yml"
-    user            = "root"
-    extra_arguments = compact([
-      var.ansible_verbosity,
-      "--connection=docker",
-      "--extra-vars", "image_build=true"
-    ])
-    ansible_env_vars = [
-      "ANSIBLE_FORCE_COLOR=1",
-      "ANSIBLE_HOST_KEY_CHECKING=False",
-      "ANSIBLE_ROLES_PATH=../ansible/roles",
-      "ANSIBLE_REMOTE_TMP=/tmp/.ansible/tmp",
-      "ANSIBLE_LOCAL_TEMP=/tmp/.ansible/local",
-      "ANSIBLE_SSH_PIPELINING=True",
-      "ANSIBLE_CONFIG=../ansible.cfg",
-      "LANG=en_US.UTF-8",
-      "LC_ALL=en_US.UTF-8"
-    ]
+    playbook_dir    = "../ansible"
+    staging_directory = "/tmp/packer-ansible"
+    clean_staging_directory = true
+    extra_arguments = ["--extra-vars", "image_build=true"]
   }
 
-  # STEP 3 — Ansible: security updates and hardening
-  provisioner "ansible" {
+  # ----------------------------------------------------------
+  # STEP 3 — ansible-local: security hardening
+  # ----------------------------------------------------------
+  provisioner "ansible-local" {
     playbook_file   = "../ansible/playbooks/security.yml"
-    user            = "root"
-    extra_arguments = compact([
-      var.ansible_verbosity,
-      "--connection=docker"
-    ])
-    ansible_env_vars = [
-      "ANSIBLE_FORCE_COLOR=1",
-      "ANSIBLE_HOST_KEY_CHECKING=False",
-      "ANSIBLE_ROLES_PATH=../ansible/roles",
-      "ANSIBLE_REMOTE_TMP=/tmp/.ansible/tmp",
-      "ANSIBLE_LOCAL_TEMP=/tmp/.ansible/local",
-      "ANSIBLE_SSH_PIPELINING=True",
-      "ANSIBLE_CONFIG=../ansible.cfg",
-      "LANG=en_US.UTF-8",
-      "LC_ALL=en_US.UTF-8"
-    ]
+    playbook_dir    = "../ansible"
+    staging_directory = "/tmp/packer-ansible"
+    clean_staging_directory = false
   }
 
-  # ----------------------------------------------------------
-  # STEP 4 — Smoke tests: verify everything is installed correctly
-  # ----------------------------------------------------------
+  # STEP 4 — Smoke tests
   provisioner "shell" {
+    environment_vars = [
+      "DEBIAN_FRONTEND=noninteractive",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ]
     inline = [
       "echo '=== SMOKE TESTS ==='",
-      "apache2 -v",
+      "/usr/sbin/apache2 -v",
       "python3 --version",
       "pip3 --version",
-      "apache2ctl configtest",
+      "/usr/sbin/apache2ctl configtest",
       "echo '=== ALL SMOKE TESTS PASSED ==='"
     ]
   }
-
-  # ----------------------------------------------------------
-  # STEP 5 — Cleanup: remove apt cache and temp files to slim image
-  # ----------------------------------------------------------
+    # STEP 5 — Cleanup
   provisioner "shell" {
+    environment_vars = [
+      "DEBIAN_FRONTEND=noninteractive",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ]
     inline = [
       "apt-get clean",
       "rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*",
-      "rm -rf /root/.cache /root/.ansible",
-      "find /var/log -type f -exec truncate --size 0 {} \\;"
+      "rm -rf /root/.cache /root/.ansible"
     ]
   }
 
-  # ----------------------------------------------------------
-  # POST-PROCESSOR — Tag the final image
-  # ----------------------------------------------------------
   post-processor "docker-tag" {
     repository = var.image_name
-    tags       = [local.final_tag, "latest"]
+    tags       = [var.image_tag]
   }
-}
+}  
