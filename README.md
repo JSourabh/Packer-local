@@ -59,4 +59,45 @@ docker run -d --name packer-web -p 8080:80 packer-webserver:latest
 ```
 
 ## Open in browser
+http://localhost:8080
+
+
+
+## Run smoke tests
+
+```bash
+cd ~/packer-tutorial
+./tests/test-image.sh packer-webserver:latest
+```
+
+## Inspect the running container
+
+```bash
+# Open a shell
+docker exec -it packer-web /bin/bash
+
+# Check Python
+docker exec packer-web python3 --version
+
+# Check Apache headers
+curl -I http://localhost:8080
+
+# View Apache logs
+docker exec packer-web cat /var/log/apache2/access.log
+```
+
+## Clean up
+
+```bash
+docker rm -f packer-web
+docker rmi packer-webserver:latest
+```
+
+## GitHub Actions (monthly rebuild)
+
+Push this repo to GitHub. The workflow at:
+  `.github/workflows/monthly-packer-build.yml`
+will automatically rebuild and push the image to GHCR on the
+1st of every month. You can also trigger it manually from the
+Actions tab in your repository.
 
