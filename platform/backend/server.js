@@ -3,6 +3,7 @@ const cors = require('cors');
 const { spawn, exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,6 +42,30 @@ app.get('/api/templates', (req, res) => {
     console.error('Error reading templates:', err);
     res.status(500).json({ error: 'Failed to read templates directory' });
   }
+});
+
+// Configure Multer for template uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, PACKER_DIR);
+  },
+  filename: (req, file, cb) => {
+    // Keep original filename but ensure it ends with .pkr.hcl
+    let filename = file.originalname;
+    if (!filename.endsWith('.pkr.hcl')) {
+      filename += '.pkr.hcl';
+    }
+    cb(null, filename);
+  }
+});
+const upload = multer({ storage });
+
+// Endpoint to upload a new template
+app.post('/api/templates/upload', upload.single('templateFile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  res.json({ message: 'Template uploaded successfully', filename: req.file.filename });
 });
 
 // Endpoint to list images
