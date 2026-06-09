@@ -11,6 +11,9 @@ function App() {
   const [logs, setLogs] = useState([])
   const terminalRef = useRef(null)
   
+  // Build Variables State
+  const [buildVars, setBuildVars] = useState([{ key: '', value: '' }])
+  
   // Upload state
   const [selectedFile, setSelectedFile] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -35,7 +38,6 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (data.dockerImages) {
-          // Parse "name:tag (id)" format
           const parsed = data.dockerImages.map(imgStr => {
             const match = imgStr.match(/^(.*?):(.*?) \((.*?)\)$/)
             if (match) {
@@ -73,6 +75,9 @@ function App() {
     setIsBuilding(true)
     setLogs([])
 
+    // In a real app we'd pass buildVars to the backend here via POST.
+    // For now, we simulate passing variables and use the existing GET endpoint.
+    console.log("Passing variables to backend:", buildVars)
     const eventSource = new EventSource(`http://localhost:3001/api/build?template=${selectedTemplate.id}`)
 
     eventSource.onmessage = (event) => {
@@ -80,7 +85,7 @@ function App() {
       if (event.data.includes('Build process exited')) {
         eventSource.close()
         setIsBuilding(false)
-        fetchImages() // refresh images when build is done
+        fetchImages()
       }
     }
 
@@ -101,7 +106,6 @@ function App() {
 
   const handleUpload = () => {
     if (!selectedFile) return
-
     setIsUploading(true)
     setUploadStatus('Uploading...')
 
@@ -129,6 +133,19 @@ function App() {
       .finally(() => {
         setIsUploading(false)
       })
+  }
+
+  // Variables Functions
+  const addVarRow = () => {
+    setBuildVars([...buildVars, { key: '', value: '' }])
+  }
+  const removeVarRow = (index) => {
+    setBuildVars(buildVars.filter((_, i) => i !== index))
+  }
+  const updateVar = (index, field, val) => {
+    const newVars = [...buildVars]
+    newVars[index][field] = val
+    setBuildVars(newVars)
   }
 
   const renderSidebar = () => (
@@ -188,7 +205,7 @@ function App() {
   )
 
   const renderPipelines = () => (
-    <>
+    <div className="page-transition">
       <header>
         <div>
           <h1 style={{ fontSize: '2.5rem' }}>Build Pipelines</h1>
@@ -270,6 +287,43 @@ function App() {
             )}
           </div>
 
+          <div className="upload-section" style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Build Variables</h3>
+            {buildVars.map((v, i) => (
+              <div key={i} className="var-row">
+                <input 
+                  type="text" 
+                  className="input-styled" 
+                  placeholder="Key (e.g. AWS_REGION)" 
+                  value={v.key} 
+                  onChange={e => updateVar(i, 'key', e.target.value)} 
+                  disabled={isBuilding}
+                />
+                <input 
+                  type="text" 
+                  className="input-styled" 
+                  placeholder="Value" 
+                  value={v.value} 
+                  onChange={e => updateVar(i, 'value', e.target.value)}
+                  disabled={isBuilding}
+                />
+                <button className="btn-icon" onClick={() => removeVarRow(i)} disabled={isBuilding}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            ))}
+            <button className="btn-add" onClick={addVarRow} disabled={isBuilding}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Variable
+            </button>
+          </div>
+
           <button 
             className="build-btn" 
             onClick={handleBuild}
@@ -299,11 +353,11 @@ function App() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 
   const renderRegistry = () => (
-    <>
+    <div className="page-transition">
       <header>
         <div>
           <h1 style={{ fontSize: '2.5rem' }}>Image Registry</h1>
@@ -354,11 +408,56 @@ function App() {
           </table>
         </div>
       </div>
-    </>
+    </div>
+  )
+
+  const renderSettings = () => (
+    <div className="page-transition">
+      <header>
+        <div>
+          <h1 style={{ fontSize: '2.5rem' }}>Settings</h1>
+          <div className="subtitle">Cloud Credentials Management</div>
+        </div>
+      </header>
+
+      <div className="glass-panel">
+        <h2>AWS Credentials</h2>
+        <div className="credentials-grid">
+          <div className="form-group">
+            <label>Access Key ID</label>
+            <input type="text" className="input-styled" placeholder="AKIAIOSFODNN7EXAMPLE" />
+          </div>
+          <div className="form-group">
+            <label>Secret Access Key</label>
+            <input type="password" className="input-styled" placeholder="••••••••••••••••••••••••" />
+          </div>
+          <div className="form-group">
+            <label>Default Region</label>
+            <input type="text" className="input-styled" placeholder="us-east-1" />
+          </div>
+        </div>
+        <button className="upload-btn-submit" style={{ marginTop: '1.5rem', width: '200px' }}>Save AWS Keys</button>
+      </div>
+
+      <div className="glass-panel" style={{ marginTop: '2.5rem' }}>
+        <h2>Docker Hub Credentials</h2>
+        <div className="credentials-grid">
+          <div className="form-group">
+            <label>Username</label>
+            <input type="text" className="input-styled" placeholder="dockeruser" />
+          </div>
+          <div className="form-group">
+            <label>Access Token / Password</label>
+            <input type="password" className="input-styled" placeholder="••••••••••••••••" />
+          </div>
+        </div>
+        <button className="upload-btn-submit" style={{ marginTop: '1.5rem', width: '200px' }}>Save Docker Auth</button>
+      </div>
+    </div>
   )
 
   const renderMockup = (title, icon) => (
-    <>
+    <div className="page-transition">
       <header>
         <div>
           <h1 style={{ fontSize: '2.5rem' }}>{title}</h1>
@@ -374,7 +473,7 @@ function App() {
           </p>
         </div>
       </div>
-    </>
+    </div>
   )
 
   return (
@@ -384,7 +483,7 @@ function App() {
         {currentView === 'pipelines' && renderPipelines()}
         {currentView === 'registry' && renderRegistry()}
         {currentView === 'integrations' && renderMockup('Integrations', '🔌')}
-        {currentView === 'settings' && renderMockup('Settings', '⚙️')}
+        {currentView === 'settings' && renderSettings()}
       </main>
     </div>
   )
