@@ -108,11 +108,21 @@ app.get('/api/build', (req, res) => {
   });
 
   buildProcess.stdout.on('data', (data) => {
-    res.write(`data: ${data.toString()}\n\n`);
+    const lines = data.toString().split('\n');
+    for (const line of lines) {
+      if (line) {
+        res.write(`data: ${line}\n\n`);
+      }
+    }
   });
 
   buildProcess.stderr.on('data', (data) => {
-    res.write(`data: ERROR: ${data.toString()}\n\n`);
+    const lines = data.toString().split('\n');
+    for (const line of lines) {
+      if (line) {
+        res.write(`data: ERROR: ${line}\n\n`);
+      }
+    }
   });
 
   buildProcess.on('close', (code) => {
