@@ -1,0 +1,23 @@
+---
+- name: Tool Installation Playbook
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure apt cache is updated
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Development Tools and Utilities
+      apt:
+        name:
+          - curl
+          - git
+          - jq
+          - htop
+          - software-properties-common
+        state: present
+
+    - name: Output success message
+      debug:
+        msg: "Successfully installed curl, git, jq, and htop inside the container!"
