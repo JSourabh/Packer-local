@@ -104,7 +104,8 @@ app.get('/api/build', (req, res) => {
   res.write(`data: Starting build for ${template}...\n\n`);
 
   const buildProcess = spawn('packer', ['build', template], {
-    cwd: path.dirname(templatePath)
+    cwd: path.dirname(templatePath),
+    env: { ...process.env, ANSIBLE_FORCE_COLOR: '1' }
   });
 
   buildProcess.stdout.on('data', (data) => {
