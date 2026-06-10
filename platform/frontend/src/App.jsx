@@ -2,33 +2,37 @@ import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
 function App() {
+  const [showDashboard, setShowDashboard] = useState(false)
   const [currentView, setCurrentView] = useState('pipelines')
 
-  // Pipeline State
+  // Dashboard States
   const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [isBuilding, setIsBuilding] = useState(false)
   const [logs, setLogs] = useState([])
   const terminalRef = useRef(null)
   
-  // Build Variables State
   const [buildVars, setBuildVars] = useState([{ key: '', value: '' }])
-  
-  // Upload state
   const [selectedFile, setSelectedFile] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
-
-  // Registry State
   const [images, setImages] = useState([])
   const [isLoadingImages, setIsLoadingImages] = useState(false)
+
+  // Bento Spotlight effect
+  const handleBentoHover = (e) => {
+    const card = e.currentTarget
+    const rect = card.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    card.style.setProperty('--x', `${x}px`)
+    card.style.setProperty('--y', `${y}px`)
+  }
 
   const fetchTemplates = () => {
     fetch('http://localhost:3001/api/templates')
       .then(res => res.json())
-      .then(data => {
-        setTemplates(data)
-      })
+      .then(data => setTemplates(data))
       .catch(err => console.error('Failed to fetch templates:', err))
   }
 
@@ -40,9 +44,7 @@ function App() {
         if (data.dockerImages) {
           const parsed = data.dockerImages.map(imgStr => {
             const match = imgStr.match(/^(.*?):(.*?) \((.*?)\)$/)
-            if (match) {
-              return { repository: match[1], tag: match[2], id: match[3] }
-            }
+            if (match) return { repository: match[1], tag: match[2], id: match[3] }
             return { repository: imgStr, tag: '-', id: '-' }
           })
           setImages(parsed)
@@ -53,15 +55,17 @@ function App() {
   }
 
   useEffect(() => {
-    fetchTemplates()
-    fetchImages()
-  }, [])
-
-  useEffect(() => {
-    if (currentView === 'registry') {
+    if (showDashboard) {
+      fetchTemplates()
       fetchImages()
     }
-  }, [currentView])
+  }, [showDashboard])
+
+  useEffect(() => {
+    if (currentView === 'registry' && showDashboard) {
+      fetchImages()
+    }
+  }, [currentView, showDashboard])
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -71,15 +75,10 @@ function App() {
 
   const handleBuild = () => {
     if (!selectedTemplate || isBuilding) return
-
     setIsBuilding(true)
     setLogs([])
 
-    // In a real app we'd pass buildVars to the backend here via POST.
-    // For now, we simulate passing variables and use the existing GET endpoint.
-    console.log("Passing variables to backend:", buildVars)
     const eventSource = new EventSource(`http://localhost:3001/api/build?template=${selectedTemplate.id}`)
-
     eventSource.onmessage = (event) => {
       setLogs(prev => [...prev, event.data])
       if (event.data.includes('Build process exited')) {
@@ -88,7 +87,6 @@ function App() {
         fetchImages()
       }
     }
-
     eventSource.onerror = (err) => {
       console.error('SSE Error:', err)
       setLogs(prev => [...prev, 'Connection error or build failed to start.'])
@@ -118,9 +116,8 @@ function App() {
     })
       .then(res => res.json())
       .then(data => {
-        if (data.error) {
-          setUploadStatus(`Error: ${data.error}`)
-        } else {
+        if (data.error) setUploadStatus(`Error: ${data.error}`)
+        else {
           setUploadStatus('Success!')
           setSelectedFile(null)
           fetchTemplates()
@@ -130,47 +127,136 @@ function App() {
         console.error('Upload failed:', err)
         setUploadStatus('Upload failed.')
       })
-      .finally(() => {
-        setIsUploading(false)
-      })
+      .finally(() => setIsUploading(false))
   }
 
-  // Variables Functions
-  const addVarRow = () => {
-    setBuildVars([...buildVars, { key: '', value: '' }])
-  }
-  const removeVarRow = (index) => {
-    setBuildVars(buildVars.filter((_, i) => i !== index))
-  }
   const updateVar = (index, field, val) => {
     const newVars = [...buildVars]
     newVars[index][field] = val
     setBuildVars(newVars)
   }
 
+  // --- RENDERING LANDING PAGE ---
+  if (!showDashboard) {
+    return (
+      <div className="page-transition">
+        <div className="ambient-bg"></div>
+        <div className="ambient-glow"></div>
+
+        <nav className="landing-nav">
+          <div className="nav-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-color)' }}>
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            Nexus Engine
+          </div>
+          <div className="nav-links">
+            <span className="nav-link">Features</span>
+            <span className="nav-link">Solutions</span>
+            <span className="nav-link">Pricing</span>
+          </div>
+          <div className="nav-actions">
+            <button className="btn-secondary">Watch Demo</button>
+            <button className="btn-primary" onClick={() => setShowDashboard(true)}>Get Started</button>
+          </div>
+        </nav>
+
+        <section className="hero-section">
+          <div className="hero-content">
+            <div className="hero-badge animate-fade-delayed">
+              <span className="pulse-dot"></span> [ NEW: AI Engine v2.0 ]
+            </div>
+            <h1 className="animate-reveal">Architecting the Future of Enterprise Data Pipelines</h1>
+            <p className="animate-fade-delayed">
+              Automate infrastructure deployment, monitor container lifecycles, and scale without configuration bottlenecks.
+            </p>
+            <div className="hero-buttons animate-fade-delayed" style={{ animationDelay: '0.4s' }}>
+              <button className="btn-primary" onClick={() => setShowDashboard(true)}>Get Started Now</button>
+              <button className="btn-secondary">Read Documentation</button>
+            </div>
+          </div>
+        </section>
+
+        <section className="bento-section animate-fade-delayed" style={{ animationDelay: '0.6s' }}>
+          <div className="bento-grid">
+            <div className="bento-card card-wide" onMouseMove={handleBentoHover}>
+              <div className="bento-card-content">
+                <h3>Live CI/CD Telemetry</h3>
+                <p style={{ marginBottom: '1rem' }}>Stream build logs directly from immutable infrastructure.</p>
+                <div className="terminal-container" style={{ height: '100%', minHeight: '150px' }}>
+                  <div className="terminal-line" style={{color: '#a1a1aa'}}>Initializing build context...</div>
+                  <div className="terminal-line" style={{color: '#a1a1aa'}}>Fetching ubuntu:22.04 layer 4f4d2f8e...</div>
+                  <div className="terminal-line success">Successfully pulled image payload</div>
+                  <div className="terminal-line" style={{color: 'var(--primary-color)'}}>Executing Ansible Provisioner [v1.1.2]</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bento-card card-narrow" onMouseMove={handleBentoHover}>
+              <div className="bento-card-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.5">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
+                <h3 style={{ marginTop: '1rem' }}>Global Latency</h3>
+                <p style={{ textAlign: 'center' }}>99.9% uptime tracking</p>
+              </div>
+            </div>
+
+            <div className="bento-card card-narrow" onMouseMove={handleBentoHover}>
+              <div className="bento-card-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+                <h3 style={{ marginTop: '1rem' }}>Isolated Containers</h3>
+                <p style={{ textAlign: 'center' }}>Secure web silos</p>
+              </div>
+            </div>
+
+            <div className="bento-card card-wide" onMouseMove={handleBentoHover}>
+              <div className="bento-card-content">
+                <h3>Dynamic Configuration</h3>
+                <p style={{ marginBottom: '1rem' }}>Inject real-time variables securely.</p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div className="input-styled" style={{ flex: 1, pointerEvents: 'none' }}>AWS_REGION=us-east-1</div>
+                  <div className="input-styled" style={{ flex: 1, pointerEvents: 'none' }}>ENV=production</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // --- RENDERING DASHBOARD ---
+
   const renderSidebar = () => (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <h1>Nexus</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => setShowDashboard(false)}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-color)' }}>
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          Nexus
+        </h1>
         <div style={{ color: 'var(--primary-color)', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '2px', marginTop: '4px' }}>
           DEVOPS CORE
         </div>
       </div>
 
       <nav className="sidebar-nav">
-        <div 
-          className={`nav-item ${currentView === 'pipelines' ? 'active' : ''}`}
-          onClick={() => setCurrentView('pipelines')}
-        >
+        <div className={`nav-item ${currentView === 'pipelines' ? 'active' : ''}`} onClick={() => setCurrentView('pipelines')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
           Build Pipelines
         </div>
-        <div 
-          className={`nav-item ${currentView === 'registry' ? 'active' : ''}`}
-          onClick={() => setCurrentView('registry')}
-        >
+        <div className={`nav-item ${currentView === 'registry' ? 'active' : ''}`} onClick={() => setCurrentView('registry')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
             <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
@@ -179,21 +265,14 @@ function App() {
           </svg>
           Image Registry
         </div>
-        <div 
-          className={`nav-item ${currentView === 'integrations' ? 'active' : ''}`}
-          onClick={() => setCurrentView('integrations')}
-        >
+        <div className={`nav-item ${currentView === 'integrations' ? 'active' : ''}`} onClick={() => setCurrentView('integrations')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
           </svg>
           Integrations
         </div>
-        <div 
-          className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
-          onClick={() => setCurrentView('settings')}
-        >
+        <div className={`nav-item ${currentView === 'settings' ? 'active' : ''}`} onClick={() => setCurrentView('settings')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -206,16 +285,16 @@ function App() {
 
   const renderPipelines = () => (
     <div className="page-transition">
-      <header>
+      <div className="main-header">
         <div>
-          <h1 style={{ fontSize: '2.5rem' }}>Build Pipelines</h1>
+          <h1>Build Pipelines</h1>
           <div className="subtitle">Execute and monitor Packer templates</div>
         </div>
         <div className="status-indicator">
           <div className={`dot ${isBuilding ? 'pulse' : ''}`}></div>
           {isBuilding ? 'Build in Progress' : 'System Ready'}
         </div>
-      </header>
+      </div>
 
       <div className="metric-cards">
         <div className="metric-card">
@@ -237,22 +316,13 @@ function App() {
           <h2>Build Target</h2>
           <ul className="template-list">
             {templates.map(template => (
-              <li 
-                key={template.id}
-                className={`template-item ${selectedTemplate?.id === template.id ? 'active' : ''}`}
-                onClick={() => !isBuilding && setSelectedTemplate(template)}
-              >
+              <li key={template.id} className={`template-item ${selectedTemplate?.id === template.id ? 'active' : ''}`} onClick={() => !isBuilding && setSelectedTemplate(template)}>
                 <div className="template-info">
                   <h3>{template.name}</h3>
                 </div>
-                <span className={`template-type ${template.type === 'AWS' ? 'aws' : ''}`}>
-                  {template.type}
-                </span>
+                <span className={`template-type ${template.type === 'AWS' ? 'aws' : ''}`}>{template.type}</span>
               </li>
             ))}
-            {templates.length === 0 && (
-              <li className="template-item">Loading templates... Make sure backend is running.</li>
-            )}
           </ul>
 
           <div className="upload-section">
@@ -268,15 +338,10 @@ function App() {
               </button>
               <input type="file" accept=".pkr.hcl,.hcl" onChange={handleFileChange} disabled={isBuilding || isUploading} />
             </div>
-            
             {(selectedFile || uploadStatus) && (
-              <div className="upload-actions">
-                <button 
-                  className="upload-btn-submit" 
-                  onClick={handleUpload}
-                  disabled={isUploading || !selectedFile}
-                >
-                  {isUploading ? 'Uploading...' : 'Upload Template'}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button className="build-btn" style={{ marginTop: 0 }} onClick={handleUpload} disabled={isUploading || !selectedFile}>
+                  {isUploading ? 'Uploading...' : 'Upload'}
                 </button>
                 {uploadStatus && (
                   <span style={{ alignSelf: 'center', color: uploadStatus.includes('Success') ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '0.9rem' }}>
@@ -291,23 +356,9 @@ function App() {
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Build Variables</h3>
             {buildVars.map((v, i) => (
               <div key={i} className="var-row">
-                <input 
-                  type="text" 
-                  className="input-styled" 
-                  placeholder="Key (e.g. AWS_REGION)" 
-                  value={v.key} 
-                  onChange={e => updateVar(i, 'key', e.target.value)} 
-                  disabled={isBuilding}
-                />
-                <input 
-                  type="text" 
-                  className="input-styled" 
-                  placeholder="Value" 
-                  value={v.value} 
-                  onChange={e => updateVar(i, 'value', e.target.value)}
-                  disabled={isBuilding}
-                />
-                <button className="btn-icon" onClick={() => removeVarRow(i)} disabled={isBuilding}>
+                <input type="text" className="input-styled" placeholder="Key" value={v.key} onChange={e => updateVar(i, 'key', e.target.value)} disabled={isBuilding} />
+                <input type="text" className="input-styled" placeholder="Value" value={v.value} onChange={e => updateVar(i, 'value', e.target.value)} disabled={isBuilding} />
+                <button className="btn-icon" onClick={() => setBuildVars(buildVars.filter((_, idx) => idx !== i))} disabled={isBuilding}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -315,31 +366,23 @@ function App() {
                 </button>
               </div>
             ))}
-            <button className="btn-add" onClick={addVarRow} disabled={isBuilding}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
+            <button className="btn-add" onClick={() => setBuildVars([...buildVars, { key: '', value: '' }])} disabled={isBuilding}>
               Add Variable
             </button>
           </div>
 
-          <button 
-            className="build-btn" 
-            onClick={handleBuild}
-            disabled={!selectedTemplate || isBuilding}
-          >
+          <button className="build-btn" onClick={handleBuild} disabled={!selectedTemplate || isBuilding}>
             {isBuilding ? 'Building Pipeline...' : 'Start Build Pipeline'}
           </button>
         </div>
 
         <div className="glass-panel" style={{ padding: '0' }}>
           <div className="terminal-header">
-            <h2>Live Build Logs</h2>
+            <h2 style={{ borderBottom: 'none', padding: 0, margin: 0 }}>Live Build Logs</h2>
           </div>
           <div className="terminal-container" ref={terminalRef}>
             {logs.length === 0 ? (
-              <div style={{ color: '#666', fontStyle: 'italic', display: 'flex', alignItems: 'center', height: '100%', justifyContent: 'center' }}>
+              <div style={{ color: '#52525b', fontStyle: 'italic', display: 'flex', alignItems: 'center', height: '100%', justifyContent: 'center' }}>
                 Select a target and start the build to view logs...
               </div>
             ) : (
@@ -358,21 +401,17 @@ function App() {
 
   const renderRegistry = () => (
     <div className="page-transition">
-      <header>
+      <div className="main-header">
         <div>
-          <h1 style={{ fontSize: '2.5rem' }}>Image Registry</h1>
+          <h1>Image Registry</h1>
           <div className="subtitle">Locally built Docker images</div>
         </div>
-      </header>
+      </div>
       
       <div className="glass-panel" style={{ flexGrow: 1 }}>
         <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           Docker Artifacts
-          <button 
-            onClick={fetchImages} 
-            className="upload-btn-submit" 
-            style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}
-          >
+          <button onClick={fetchImages} className="btn-secondary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
             {isLoadingImages ? 'Refreshing...' : 'Refresh'}
           </button>
         </h2>
@@ -413,12 +452,12 @@ function App() {
 
   const renderSettings = () => (
     <div className="page-transition">
-      <header>
+      <div className="main-header">
         <div>
-          <h1 style={{ fontSize: '2.5rem' }}>Settings</h1>
+          <h1>Settings</h1>
           <div className="subtitle">Cloud Credentials Management</div>
         </div>
-      </header>
+      </div>
 
       <div className="glass-panel">
         <h2>AWS Credentials</h2>
@@ -436,7 +475,7 @@ function App() {
             <input type="text" className="input-styled" placeholder="us-east-1" />
           </div>
         </div>
-        <button className="upload-btn-submit" style={{ marginTop: '1.5rem', width: '200px' }}>Save AWS Keys</button>
+        <button className="build-btn" style={{ marginTop: '1.5rem', width: '200px' }}>Save AWS Keys</button>
       </div>
 
       <div className="glass-panel" style={{ marginTop: '2.5rem' }}>
@@ -451,22 +490,22 @@ function App() {
             <input type="password" className="input-styled" placeholder="••••••••••••••••" />
           </div>
         </div>
-        <button className="upload-btn-submit" style={{ marginTop: '1.5rem', width: '200px' }}>Save Docker Auth</button>
+        <button className="build-btn" style={{ marginTop: '1.5rem', width: '200px' }}>Save Docker Auth</button>
       </div>
     </div>
   )
 
   const renderMockup = (title, icon) => (
     <div className="page-transition">
-      <header>
+      <div className="main-header">
         <div>
-          <h1 style={{ fontSize: '2.5rem' }}>{title}</h1>
+          <h1>{title}</h1>
           <div className="subtitle">Platform Configuration</div>
         </div>
-      </header>
+      </div>
       <div className="glass-panel" style={{ flexGrow: 1, justifyContent: 'center' }}>
-        <div className="mockup-content">
-          <div className="mockup-icon">{icon}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '5rem 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1.5rem', opacity: 0.5 }}>{icon}</div>
           <h2 style={{ borderBottom: 'none', marginBottom: '1rem', fontSize: '1.8rem' }}>Under Construction</h2>
           <p style={{ maxWidth: '400px', margin: '0 auto', lineHeight: '1.6' }}>
             The {title} module is currently being built out. Check back soon for advanced configuration options.
