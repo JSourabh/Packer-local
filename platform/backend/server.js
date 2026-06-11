@@ -70,17 +70,58 @@ app.post('/api/templates/upload', upload.single('templateFile'), (req, res) => {
 
 // Endpoint to generate a custom template
 app.post('/api/templates/generate', (req, res) => {
-  const { imageName, baseAmi, instanceType, region, toolName, requirement } = req.body;
+  const { platform, imageName, baseAmi, baseImage, instanceType, region, toolName, requirement } = req.body;
   
-  if (!imageName || !baseAmi || !instanceType || !region) {
-    return res.status(400).json({ error: 'Missing required AWS AMI fields' });
+  if (!imageName) {
+    return res.status(400).json({ error: 'Image Name is required' });
   }
 
   const safeImageName = imageName.replace(/[^a-zA-Z0-9_-]/g, '');
-  const filename = `custom-${safeImageName}.pkr.hcl`;
+  const prefix = platform === 'docker' ? 'docker-' : 'custom-';
+  const filename = `${prefix}${safeImageName}.pkr.hcl`;
   const filePath = path.join(PACKER_DIR, filename);
 
-  const hclContent = `
+  let hclContent = '';
+
+  if (platform === 'docker') {
+    hclContent = `
+packer {
+  required_plugins {
+    docker = {
+      version = ">= 1.0.9"
+      source  = "github.com/hashicorp/docker"
+    }
+  }
+}
+
+source "docker" "custom" {
+  image  = "${baseImage || 'ubuntu:22.04'}"
+  commit = true
+}
+
+build {
+  sources = ["source.docker.custom"]
+
+  provisioner "shell" {
+    inline = [
+      "export DEBIAN_FRONTEND=noninteractive",
+      "apt-get update -qq",
+      "apt-get install -y ${toolName} ${requirement}"
+    ]
+  }
+
+  post-processor "docker-tag" {
+    repository = "${safeImageName}"
+    tags       = ["latest"]
+  }
+}
+`;
+  } else {
+    // AWS
+    if (!baseAmi || !instanceType || !region) {
+      return res.status(400).json({ error: 'Missing required AWS AMI fields' });
+    }
+    hclContent = `
 packer {
   required_plugins {
     amazon = {
@@ -109,6 +150,7 @@ build {
   }
 }
 `;
+  }
 
   try {
     fs.writeFileSync(filePath, hclContent.trim());

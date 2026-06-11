@@ -21,8 +21,10 @@ function App() {
 
   // Custom AMI Form State
   const [amiForm, setAmiForm] = useState({
+    platform: 'aws',
     imageName: '',
     baseAmi: 'ami-0c7217cdde317cfec',
+    baseImage: 'ubuntu:22.04',
     instanceType: 't2.micro',
     region: 'us-east-1',
     toolName: '',
@@ -389,29 +391,53 @@ function App() {
           </div>
 
           <div className="upload-section" style={{ marginTop: '2rem' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Generate Custom AMI</h3>
-            <div className="credentials-grid" style={{ marginBottom: '1rem' }}>
-              <div className="form-group">
+            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Generate Custom Image Template</h3>
+            
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label>Target Platform</label>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer', textTransform: 'none' }}>
+                  <input type="radio" name="platform" value="aws" checked={amiForm.platform === 'aws'} onChange={() => setAmiForm({...amiForm, platform: 'aws'})} /> AWS AMI
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer', textTransform: 'none' }}>
+                  <input type="radio" name="platform" value="docker" checked={amiForm.platform === 'docker'} onChange={() => setAmiForm({...amiForm, platform: 'docker'})} /> Docker Image
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>Image Name</label>
                 <input type="text" className="input-styled" placeholder="my-custom-app" value={amiForm.imageName} onChange={e => setAmiForm({...amiForm, imageName: e.target.value})} disabled={isGenerating || isBuilding} />
               </div>
-              <div className="form-group">
-                <label>Base AMI</label>
-                <input type="text" className="input-styled" placeholder="ami-0c7217cdde317cfec" value={amiForm.baseAmi} onChange={e => setAmiForm({...amiForm, baseAmi: e.target.value})} disabled={isGenerating || isBuilding} />
-              </div>
-              <div className="form-group">
-                <label>Instance Type</label>
-                <input type="text" className="input-styled" placeholder="t2.micro" value={amiForm.instanceType} onChange={e => setAmiForm({...amiForm, instanceType: e.target.value})} disabled={isGenerating || isBuilding} />
-              </div>
-              <div className="form-group">
-                <label>Region</label>
-                <input type="text" className="input-styled" placeholder="us-east-1" value={amiForm.region} onChange={e => setAmiForm({...amiForm, region: e.target.value})} disabled={isGenerating || isBuilding} />
-              </div>
-              <div className="form-group">
+              
+              {amiForm.platform === 'aws' ? (
+                <>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Base AMI</label>
+                    <input type="text" className="input-styled" placeholder="ami-0c7217cdde317cfec" value={amiForm.baseAmi} onChange={e => setAmiForm({...amiForm, baseAmi: e.target.value})} disabled={isGenerating || isBuilding} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Instance Type</label>
+                    <input type="text" className="input-styled" placeholder="t2.micro" value={amiForm.instanceType} onChange={e => setAmiForm({...amiForm, instanceType: e.target.value})} disabled={isGenerating || isBuilding} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Region</label>
+                    <input type="text" className="input-styled" placeholder="us-east-1" value={amiForm.region} onChange={e => setAmiForm({...amiForm, region: e.target.value})} disabled={isGenerating || isBuilding} />
+                  </div>
+                </>
+              ) : (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Base Docker Image</label>
+                  <input type="text" className="input-styled" placeholder="ubuntu:22.04" value={amiForm.baseImage} onChange={e => setAmiForm({...amiForm, baseImage: e.target.value})} disabled={isGenerating || isBuilding} />
+                </div>
+              )}
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>Tool Name</label>
                 <input type="text" className="input-styled" placeholder="nodejs" value={amiForm.toolName} onChange={e => setAmiForm({...amiForm, toolName: e.target.value})} disabled={isGenerating || isBuilding} />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>Requirement</label>
                 <input type="text" className="input-styled" placeholder="npm" value={amiForm.requirement} onChange={e => setAmiForm({...amiForm, requirement: e.target.value})} disabled={isGenerating || isBuilding} />
               </div>
