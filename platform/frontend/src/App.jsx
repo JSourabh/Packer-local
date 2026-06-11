@@ -163,7 +163,7 @@ function App() {
       })
       .catch(err => {
         console.error('Generate failed:', err)
-        setGenerateStatus('Generation failed.')
+        setGenerateStatus(`Failed: ${err.message || 'Network Error'}`)
       })
       .finally(() => setIsGenerating(false))
   }
