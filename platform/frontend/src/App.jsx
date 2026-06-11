@@ -4,6 +4,7 @@ import './index.css'
 function App() {
   const [showDashboard, setShowDashboard] = useState(false)
   const [currentView, setCurrentView] = useState('pipelines')
+  const [pipelineTab, setPipelineTab] = useState('execution')
 
   // Dashboard States
   const [templates, setTemplates] = useState([])
@@ -336,123 +337,76 @@ function App() {
 
       <div className="metric-cards">
         <div className="metric-card">
-          <div className="metric-value">{templates.length}</div>
-          <div className="metric-label">Available Targets</div>
+          <div className="metric-header">
+            <div>
+              <div className="metric-value">98.5%</div>
+              <div className="metric-label">Build Success Rate</div>
+            </div>
+            <div className="metric-trend trend-up">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+              +2.1%
+            </div>
+          </div>
+          <div className="sparkline-container">
+            <svg viewBox="0 0 100 30" width="100%" height="100%" preserveAspectRatio="none">
+              <path d="M0,25 L10,20 L20,22 L30,15 L40,18 L50,10 L60,12 L70,5 L80,8 L90,2 L100,0" fill="none" stroke="var(--success-color)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+              <path d="M0,25 L10,20 L20,22 L30,15 L40,18 L50,10 L60,12 L70,5 L80,8 L90,2 L100,0 L100,30 L0,30 Z" fill="rgba(16, 185, 129, 0.1)" stroke="none" />
+            </svg>
+          </div>
         </div>
         <div className="metric-card">
-          <div className="metric-value">{isBuilding ? '1' : '0'}</div>
-          <div className="metric-label">Active Pipelines</div>
+          <div className="metric-header">
+            <div>
+              <div className="metric-value">2m 14s</div>
+              <div className="metric-label">Avg. Build Duration</div>
+            </div>
+            <div className="metric-trend trend-down">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>
+              -12s
+            </div>
+          </div>
+          <div className="sparkline-container">
+            <svg viewBox="0 0 100 30" width="100%" height="100%" preserveAspectRatio="none">
+              <path d="M0,15 L10,18 L20,12 L30,20 L40,15 L50,22 L60,18 L70,25 L80,20 L90,28 L100,25" fill="none" stroke="var(--primary-color)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+            </svg>
+          </div>
         </div>
         <div className="metric-card">
-          <div className="metric-value">{images.length}</div>
-          <div className="metric-label">Total Artifacts</div>
+          <div className="metric-header">
+            <div>
+              <div className="metric-value">{templates.length}</div>
+              <div className="metric-label">Active Templates</div>
+            </div>
+          </div>
+          <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Ready for execution across AWS and Docker targets.
+          </div>
         </div>
       </div>
 
-      <div className="dashboard">
-        <div className="glass-panel">
-          <h2>Build Target</h2>
-          <ul className="template-list">
-            {templates.map(template => (
-              <li key={template.id} className={`template-item ${selectedTemplate?.id === template.id ? 'active' : ''}`} onClick={() => !isBuilding && setSelectedTemplate(template)}>
-                <div className="template-info">
-                  <h3>{template.name}</h3>
-                </div>
-                <span className={`template-type ${template.type === 'AWS' ? 'aws' : ''}`}>{template.type}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="sub-nav">
+        <div className={`sub-nav-item ${pipelineTab === 'execution' ? 'active' : ''}`} onClick={() => setPipelineTab('execution')}>
+          Pipeline Execution
+        </div>
+        <div className={`sub-nav-item ${pipelineTab === 'management' ? 'active' : ''}`} onClick={() => setPipelineTab('management')}>
+          Template Library
+        </div>
+      </div>
 
-          <div className="upload-section">
-            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Add Template</h3>
-            <div className="file-input-wrapper">
-              <button className="btn-upload-ui">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                {selectedFile ? selectedFile.name : 'Select .pkr.hcl File'}
-              </button>
-              <input type="file" accept=".pkr.hcl,.hcl" onChange={handleFileChange} disabled={isBuilding || isUploading} />
-            </div>
-            {(selectedFile || uploadStatus) && (
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button className="build-btn" style={{ marginTop: 0 }} onClick={handleUpload} disabled={isUploading || !selectedFile}>
-                  {isUploading ? 'Uploading...' : 'Upload'}
-                </button>
-                {uploadStatus && (
-                  <span style={{ alignSelf: 'center', color: uploadStatus.includes('Success') ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '0.9rem' }}>
-                    {uploadStatus}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="upload-section" style={{ marginTop: '2rem' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Generate Custom Image Template</h3>
-            
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label>Target Platform</label>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer', textTransform: 'none' }}>
-                  <input type="radio" name="platform" value="aws" checked={amiForm.platform === 'aws'} onChange={() => setAmiForm({...amiForm, platform: 'aws'})} /> AWS AMI
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer', textTransform: 'none' }}>
-                  <input type="radio" name="platform" value="docker" checked={amiForm.platform === 'docker'} onChange={() => setAmiForm({...amiForm, platform: 'docker'})} /> Docker Image
-                </label>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Image Name</label>
-                <input type="text" className="input-styled" placeholder="my-custom-app" value={amiForm.imageName} onChange={e => setAmiForm({...amiForm, imageName: e.target.value})} disabled={isGenerating || isBuilding} />
-              </div>
-              
-              {amiForm.platform === 'aws' ? (
-                <>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label>Base AMI</label>
-                    <input type="text" className="input-styled" placeholder="ami-0c7217cdde317cfec" value={amiForm.baseAmi} onChange={e => setAmiForm({...amiForm, baseAmi: e.target.value})} disabled={isGenerating || isBuilding} />
+      {pipelineTab === 'execution' && (
+        <div className="dashboard">
+          <div className="glass-panel">
+            <h2>Select Build Target</h2>
+            <ul className="template-list">
+              {templates.map(template => (
+                <li key={template.id} className={`template-item ${selectedTemplate?.id === template.id ? 'active' : ''}`} onClick={() => !isBuilding && setSelectedTemplate(template)}>
+                  <div className="template-info">
+                    <h3>{template.name}</h3>
                   </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label>Instance Type</label>
-                    <input type="text" className="input-styled" placeholder="t2.micro" value={amiForm.instanceType} onChange={e => setAmiForm({...amiForm, instanceType: e.target.value})} disabled={isGenerating || isBuilding} />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label>Region</label>
-                    <input type="text" className="input-styled" placeholder="us-east-1" value={amiForm.region} onChange={e => setAmiForm({...amiForm, region: e.target.value})} disabled={isGenerating || isBuilding} />
-                  </div>
-                </>
-              ) : (
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Base Docker Image</label>
-                  <input type="text" className="input-styled" placeholder="ubuntu:22.04" value={amiForm.baseImage} onChange={e => setAmiForm({...amiForm, baseImage: e.target.value})} disabled={isGenerating || isBuilding} />
-                </div>
-              )}
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Tool Name</label>
-                <input type="text" className="input-styled" placeholder="nodejs" value={amiForm.toolName} onChange={e => setAmiForm({...amiForm, toolName: e.target.value})} disabled={isGenerating || isBuilding} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Requirement</label>
-                <input type="text" className="input-styled" placeholder="npm" value={amiForm.requirement} onChange={e => setAmiForm({...amiForm, requirement: e.target.value})} disabled={isGenerating || isBuilding} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button className="build-btn" style={{ marginTop: 0 }} onClick={handleGenerate} disabled={isGenerating || isBuilding || !amiForm.imageName}>
-                {isGenerating ? 'Generating...' : 'Generate Template'}
-              </button>
-              {generateStatus && (
-                <span style={{ alignSelf: 'center', color: generateStatus.includes('Success') ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '0.9rem' }}>
-                  {generateStatus}
-                </span>
-              )}
-            </div>
-          </div>
+                  <span className={`template-type ${template.type === 'AWS' ? 'aws' : ''}`}>{template.type}</span>
+                </li>
+              ))}
+            </ul>
 
           <div className="upload-section" style={{ marginTop: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Build Variables</h3>
@@ -497,7 +451,104 @@ function App() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
+
+      {pipelineTab === 'management' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem' }}>
+          <div className="glass-panel">
+            <h2>Generate Custom Template</h2>
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label>Target Platform</label>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer', textTransform: 'none' }}>
+                  <input type="radio" name="platform" value="aws" checked={amiForm.platform === 'aws'} onChange={() => setAmiForm({...amiForm, platform: 'aws'})} /> AWS AMI
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', cursor: 'pointer', textTransform: 'none' }}>
+                  <input type="radio" name="platform" value="docker" checked={amiForm.platform === 'docker'} onChange={() => setAmiForm({...amiForm, platform: 'docker'})} /> Docker Image
+                </label>
+              </div>
+            </div>
+
+            <div className="credentials-grid" style={{ marginTop: 0, marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Image Name</label>
+                <input type="text" className="input-styled" placeholder="my-custom-app" value={amiForm.imageName} onChange={e => setAmiForm({...amiForm, imageName: e.target.value})} disabled={isGenerating} />
+              </div>
+              
+              {amiForm.platform === 'aws' ? (
+                <>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Base AMI</label>
+                    <input type="text" className="input-styled" placeholder="ami-0c7217cdde317cfec" value={amiForm.baseAmi} onChange={e => setAmiForm({...amiForm, baseAmi: e.target.value})} disabled={isGenerating} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Instance Type</label>
+                    <input type="text" className="input-styled" placeholder="t2.micro" value={amiForm.instanceType} onChange={e => setAmiForm({...amiForm, instanceType: e.target.value})} disabled={isGenerating} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label>Region</label>
+                    <input type="text" className="input-styled" placeholder="us-east-1" value={amiForm.region} onChange={e => setAmiForm({...amiForm, region: e.target.value})} disabled={isGenerating} />
+                  </div>
+                </>
+              ) : (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Base Docker Image</label>
+                  <input type="text" className="input-styled" placeholder="ubuntu:22.04" value={amiForm.baseImage} onChange={e => setAmiForm({...amiForm, baseImage: e.target.value})} disabled={isGenerating} />
+                </div>
+              )}
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Tool Name</label>
+                <input type="text" className="input-styled" placeholder="nodejs" value={amiForm.toolName} onChange={e => setAmiForm({...amiForm, toolName: e.target.value})} disabled={isGenerating} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Requirement</label>
+                <input type="text" className="input-styled" placeholder="npm" value={amiForm.requirement} onChange={e => setAmiForm({...amiForm, requirement: e.target.value})} disabled={isGenerating} />
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button className="build-btn" style={{ marginTop: 0, flex: 1 }} onClick={handleGenerate} disabled={isGenerating || !amiForm.imageName}>
+                {isGenerating ? 'Generating...' : 'Generate Template'}
+              </button>
+              {generateStatus && (
+                <span style={{ color: generateStatus.includes('Failed') ? 'var(--danger-color)' : 'var(--success-color)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                  {generateStatus}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel">
+            <h2>Upload Existing Template</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+              Upload an existing `.pkr.hcl` Packer file. It will be added to the registry and made available for immediate execution in your pipelines.
+            </p>
+            <div className="file-input-wrapper">
+              <button className="btn-upload-ui" style={{ padding: '2rem' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: '0.5rem' }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                {selectedFile ? selectedFile.name : 'Click to Select .pkr.hcl File'}
+              </button>
+              <input type="file" accept=".pkr.hcl,.hcl" onChange={handleFileChange} disabled={isUploading} />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '1.5rem' }}>
+              <button className="build-btn" style={{ marginTop: 0, flex: 1 }} onClick={handleUpload} disabled={isUploading || !selectedFile}>
+                {isUploading ? 'Uploading...' : 'Upload File'}
+              </button>
+              {uploadStatus && (
+                <span style={{ color: uploadStatus.includes('Success') ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                  {uploadStatus}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 

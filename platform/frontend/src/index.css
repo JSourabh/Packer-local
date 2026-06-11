@@ -726,3 +726,56 @@ body {
   gap: 2rem;
   margin-top: 2rem;
 }
+
+/* Sub Navigation */
+.sub-nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 0.5rem;
+}
+
+.sub-nav-item {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.sub-nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sub-nav-item.active {
+  color: var(--primary-color);
+  background: rgba(249, 115, 22, 0.1);
+}
+
+/* Advanced KPI Cards */
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.metric-trend {
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.trend-up { color: var(--success-color); }
+.trend-down { color: var(--danger-color); }
+
+.sparkline-container {
+  height: 40px;
+  margin-top: 1rem;
+  width: 100%;
+}
