@@ -19,6 +19,18 @@ function App() {
   const [images, setImages] = useState([])
   const [isLoadingImages, setIsLoadingImages] = useState(false)
 
+  // Custom AMI Form State
+  const [amiForm, setAmiForm] = useState({
+    imageName: '',
+    baseAmi: 'ami-0c7217cdde317cfec',
+    instanceType: 't2.micro',
+    region: 'us-east-1',
+    toolName: '',
+    requirement: ''
+  })
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generateStatus, setGenerateStatus] = useState('')
+
   // Bento Spotlight effect
   const handleBentoHover = (e) => {
     const card = e.currentTarget
@@ -128,6 +140,30 @@ function App() {
         setUploadStatus('Upload failed.')
       })
       .finally(() => setIsUploading(false))
+  }
+
+  const handleGenerate = () => {
+    setIsGenerating(true)
+    setGenerateStatus('Generating...')
+    
+    fetch('http://localhost:3001/api/templates/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(amiForm)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) setGenerateStatus(`Error: ${data.error}`)
+        else {
+          setGenerateStatus('Success!')
+          fetchTemplates() // Refresh the list
+        }
+      })
+      .catch(err => {
+        console.error('Generate failed:', err)
+        setGenerateStatus('Generation failed.')
+      })
+      .finally(() => setIsGenerating(false))
   }
 
   const updateVar = (index, field, val) => {
@@ -350,6 +386,46 @@ function App() {
                 )}
               </div>
             )}
+          </div>
+
+          <div className="upload-section" style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Generate Custom AMI</h3>
+            <div className="credentials-grid" style={{ marginBottom: '1rem' }}>
+              <div className="form-group">
+                <label>Image Name</label>
+                <input type="text" className="input-styled" placeholder="my-custom-app" value={amiForm.imageName} onChange={e => setAmiForm({...amiForm, imageName: e.target.value})} disabled={isGenerating || isBuilding} />
+              </div>
+              <div className="form-group">
+                <label>Base AMI</label>
+                <input type="text" className="input-styled" placeholder="ami-0c7217cdde317cfec" value={amiForm.baseAmi} onChange={e => setAmiForm({...amiForm, baseAmi: e.target.value})} disabled={isGenerating || isBuilding} />
+              </div>
+              <div className="form-group">
+                <label>Instance Type</label>
+                <input type="text" className="input-styled" placeholder="t2.micro" value={amiForm.instanceType} onChange={e => setAmiForm({...amiForm, instanceType: e.target.value})} disabled={isGenerating || isBuilding} />
+              </div>
+              <div className="form-group">
+                <label>Region</label>
+                <input type="text" className="input-styled" placeholder="us-east-1" value={amiForm.region} onChange={e => setAmiForm({...amiForm, region: e.target.value})} disabled={isGenerating || isBuilding} />
+              </div>
+              <div className="form-group">
+                <label>Tool Name</label>
+                <input type="text" className="input-styled" placeholder="nodejs" value={amiForm.toolName} onChange={e => setAmiForm({...amiForm, toolName: e.target.value})} disabled={isGenerating || isBuilding} />
+              </div>
+              <div className="form-group">
+                <label>Requirement</label>
+                <input type="text" className="input-styled" placeholder="npm" value={amiForm.requirement} onChange={e => setAmiForm({...amiForm, requirement: e.target.value})} disabled={isGenerating || isBuilding} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="build-btn" style={{ marginTop: 0 }} onClick={handleGenerate} disabled={isGenerating || isBuilding || !amiForm.imageName}>
+                {isGenerating ? 'Generating...' : 'Generate Template'}
+              </button>
+              {generateStatus && (
+                <span style={{ alignSelf: 'center', color: generateStatus.includes('Success') ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '0.9rem' }}>
+                  {generateStatus}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="upload-section" style={{ marginTop: '2rem' }}>

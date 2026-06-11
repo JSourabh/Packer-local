@@ -68,6 +68,57 @@ app.post('/api/templates/upload', upload.single('templateFile'), (req, res) => {
   res.json({ message: 'Template uploaded successfully', filename: req.file.filename });
 });
 
+// Endpoint to generate a custom template
+app.post('/api/templates/generate', (req, res) => {
+  const { imageName, baseAmi, instanceType, region, toolName, requirement } = req.body;
+  
+  if (!imageName || !baseAmi || !instanceType || !region) {
+    return res.status(400).json({ error: 'Missing required AWS AMI fields' });
+  }
+
+  const safeImageName = imageName.replace(/[^a-zA-Z0-9_-]/g, '');
+  const filename = `custom-${safeImageName}.pkr.hcl`;
+  const filePath = path.join(PACKER_DIR, filename);
+
+  const hclContent = `
+packer {
+  required_plugins {
+    amazon = {
+      version = ">= 1.2.8"
+      source  = "github.com/hashicorp/amazon"
+    }
+  }
+}
+
+source "amazon-ebs" "custom" {
+  ami_name      = "${safeImageName}-{{timestamp}}"
+  instance_type = "${instanceType}"
+  region        = "${region}"
+  source_ami    = "${baseAmi}"
+  ssh_username  = "ubuntu"
+}
+
+build {
+  sources = ["source.amazon-ebs.custom"]
+
+  provisioner "shell" {
+    inline = [
+      "sudo apt-get update",
+      "sudo apt-get install -y ${toolName} ${requirement}"
+    ]
+  }
+}
+`;
+
+  try {
+    fs.writeFileSync(filePath, hclContent.trim());
+    res.json({ message: 'Template generated successfully', filename });
+  } catch (err) {
+    console.error('Error generating template:', err);
+    res.status(500).json({ error: 'Failed to write template file' });
+  }
+});
+
 // Endpoint to list images
 app.get('/api/images', (req, res) => {
   exec('docker images --format "{{.Repository}}:{{.Tag}} ({{.ID}})" | grep packer', (error, stdout, stderr) => {
