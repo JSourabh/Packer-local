@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Terminal, Box, Plug, Settings, TrendingUp, TrendingDown, UploadCloud, X, Hexagon, Globe, Shield, Cpu } from 'lucide-react'
 import './index.css'
 
 function App() {
@@ -184,11 +185,7 @@ function App() {
 
         <nav className="landing-nav">
           <div className="nav-brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-color)' }}>
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
+            <Hexagon size={24} color="var(--primary-color)" />
             Nexus Engine
           </div>
           <div className="nav-links">
@@ -235,9 +232,7 @@ function App() {
 
             <div className="bento-card card-narrow" onMouseMove={handleBentoHover}>
               <div className="bento-card-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.5">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
-                </svg>
+                <Globe size={64} color="var(--primary-color)" strokeWidth={1.5} />
                 <h3 style={{ marginTop: '1rem' }}>Global Latency</h3>
                 <p style={{ textAlign: 'center' }}>99.9% uptime tracking</p>
               </div>
@@ -245,10 +240,7 @@ function App() {
 
             <div className="bento-card card-narrow" onMouseMove={handleBentoHover}>
               <div className="bento-card-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="9" y1="3" x2="9" y2="21"></line>
-                </svg>
+                <Shield size={64} color="var(--primary-color)" strokeWidth={1.5} />
                 <h3 style={{ marginTop: '1rem' }}>Isolated Containers</h3>
                 <p style={{ textAlign: 'center' }}>Secure web silos</p>
               </div>
@@ -276,11 +268,7 @@ function App() {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => setShowDashboard(false)}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-color)' }}>
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
+          <Cpu size={24} color="var(--primary-color)" />
           Nexus
         </h1>
         <div style={{ color: 'var(--primary-color)', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '2px', marginTop: '4px' }}>
@@ -290,32 +278,19 @@ function App() {
 
       <nav className="sidebar-nav">
         <div className={`nav-item ${currentView === 'pipelines' ? 'active' : ''}`} onClick={() => setCurrentView('pipelines')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
+          <Terminal size={20} />
           Build Pipelines
         </div>
         <div className={`nav-item ${currentView === 'registry' ? 'active' : ''}`} onClick={() => setCurrentView('registry')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-            <line x1="6" y1="6" x2="6.01" y2="6"></line>
-            <line x1="6" y1="18" x2="6.01" y2="18"></line>
-          </svg>
+          <Box size={20} />
           Image Registry
         </div>
         <div className={`nav-item ${currentView === 'integrations' ? 'active' : ''}`} onClick={() => setCurrentView('integrations')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-          </svg>
+          <Plug size={20} />
           Integrations
         </div>
         <div className={`nav-item ${currentView === 'settings' ? 'active' : ''}`} onClick={() => setCurrentView('settings')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
+          <Settings size={20} />
           Settings
         </div>
       </nav>
@@ -336,14 +311,14 @@ function App() {
       </div>
 
       <div className="metric-cards">
-        <div className="metric-card">
+        <div className="metric-card stagger-1">
           <div className="metric-header">
             <div>
               <div className="metric-value">98.5%</div>
               <div className="metric-label">Build Success Rate</div>
             </div>
             <div className="metric-trend trend-up">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+              <TrendingUp size={16} />
               +2.1%
             </div>
           </div>
@@ -354,14 +329,14 @@ function App() {
             </svg>
           </div>
         </div>
-        <div className="metric-card">
+        <div className="metric-card stagger-2">
           <div className="metric-header">
             <div>
               <div className="metric-value">2m 14s</div>
               <div className="metric-label">Avg. Build Duration</div>
             </div>
             <div className="metric-trend trend-down">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>
+              <TrendingDown size={16} />
               -12s
             </div>
           </div>
@@ -371,7 +346,7 @@ function App() {
             </svg>
           </div>
         </div>
-        <div className="metric-card">
+        <div className="metric-card stagger-3">
           <div className="metric-header">
             <div>
               <div className="metric-value">{templates.length}</div>
@@ -394,8 +369,8 @@ function App() {
       </div>
 
       {pipelineTab === 'execution' && (
-        <div className="dashboard">
-          <div className="glass-panel">
+        <div className="dashboard stagger-2">
+          <div className="glass-panel stagger-3">
             <h2>Select Build Target</h2>
             <ul className="template-list">
               {templates.map(template => (
@@ -415,10 +390,7 @@ function App() {
                 <input type="text" className="input-styled" placeholder="Key" value={v.key} onChange={e => updateVar(i, 'key', e.target.value)} disabled={isBuilding} />
                 <input type="text" className="input-styled" placeholder="Value" value={v.value} onChange={e => updateVar(i, 'value', e.target.value)} disabled={isBuilding} />
                 <button className="btn-icon" onClick={() => setBuildVars(buildVars.filter((_, idx) => idx !== i))} disabled={isBuilding}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
+                  <X size={20} />
                 </button>
               </div>
             ))}
@@ -432,7 +404,7 @@ function App() {
           </button>
         </div>
 
-        <div className="glass-panel" style={{ padding: '0' }}>
+        <div className="glass-panel stagger-4" style={{ padding: '0' }}>
           <div className="terminal-header">
             <h2 style={{ borderBottom: 'none', padding: 0, margin: 0 }}>Live Build Logs</h2>
           </div>
@@ -456,7 +428,7 @@ function App() {
 
       {pipelineTab === 'management' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem' }}>
-          <div className="glass-panel">
+          <div className="glass-panel stagger-2">
             <h2>Generate Custom Template</h2>
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label>Target Platform</label>
@@ -520,18 +492,14 @@ function App() {
             </div>
           </div>
 
-          <div className="glass-panel">
+          <div className="glass-panel stagger-3">
             <h2>Upload Existing Template</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
               Upload an existing `.pkr.hcl` Packer file. It will be added to the registry and made available for immediate execution in your pipelines.
             </p>
             <div className="file-input-wrapper">
               <button className="btn-upload-ui" style={{ padding: '2rem' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: '0.5rem' }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
+                <UploadCloud size={32} style={{ marginBottom: '0.5rem' }} />
                 {selectedFile ? selectedFile.name : 'Click to Select .pkr.hcl File'}
               </button>
               <input type="file" accept=".pkr.hcl,.hcl" onChange={handleFileChange} disabled={isUploading} />
@@ -561,7 +529,7 @@ function App() {
         </div>
       </div>
       
-      <div className="glass-panel" style={{ flexGrow: 1 }}>
+      <div className="glass-panel stagger-1" style={{ flexGrow: 1 }}>
         <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           Docker Artifacts
           <button onClick={fetchImages} className="btn-secondary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
@@ -612,7 +580,7 @@ function App() {
         </div>
       </div>
 
-      <div className="glass-panel">
+      <div className="glass-panel stagger-1">
         <h2>AWS Credentials</h2>
         <div className="credentials-grid">
           <div className="form-group">
@@ -631,7 +599,7 @@ function App() {
         <button className="build-btn" style={{ marginTop: '1.5rem', width: '200px' }}>Save AWS Keys</button>
       </div>
 
-      <div className="glass-panel" style={{ marginTop: '2.5rem' }}>
+      <div className="glass-panel stagger-2" style={{ marginTop: '2.5rem' }}>
         <h2>Docker Hub Credentials</h2>
         <div className="credentials-grid">
           <div className="form-group">
@@ -656,7 +624,7 @@ function App() {
           <div className="subtitle">Platform Configuration</div>
         </div>
       </div>
-      <div className="glass-panel" style={{ flexGrow: 1, justifyContent: 'center' }}>
+      <div className="glass-panel stagger-1" style={{ flexGrow: 1, justifyContent: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '5rem 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
           <div style={{ fontSize: '4rem', marginBottom: '1.5rem', opacity: 0.5 }}>{icon}</div>
           <h2 style={{ borderBottom: 'none', marginBottom: '1rem', fontSize: '1.8rem' }}>Under Construction</h2>
