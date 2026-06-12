@@ -372,16 +372,29 @@ function App() {
         <div className="dashboard stagger-2">
           <div className="glass-panel stagger-3">
             <h2>Select Build Target</h2>
-            <ul className="template-list">
+            <select 
+              className="input-styled" 
+              value={selectedTemplate?.id || ""}
+              onChange={(e) => {
+                if (e.target.value === 'new_build') {
+                  setPipelineTab('management');
+                  setSelectedTemplate(null);
+                } else {
+                  const t = templates.find(t => t.id === e.target.value);
+                  if(t) setSelectedTemplate(t);
+                }
+              }}
+              disabled={isBuilding}
+              style={{ width: '100%', cursor: 'pointer' }}
+            >
+              <option value="" disabled>Select a build target...</option>
               {templates.map(template => (
-                <li key={template.id} className={`template-item ${selectedTemplate?.id === template.id ? 'active' : ''}`} onClick={() => !isBuilding && setSelectedTemplate(template)}>
-                  <div className="template-info">
-                    <h3>{template.name}</h3>
-                  </div>
-                  <span className={`template-type ${template.type === 'AWS' ? 'aws' : ''}`}>{template.type}</span>
-                </li>
+                <option key={template.id} value={template.id}>
+                  {template.name} ({template.type})
+                </option>
               ))}
-            </ul>
+              <option value="new_build">+ New Build</option>
+            </select>
 
           <div className="upload-section" style={{ marginTop: '2rem' }}>
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Build Variables</h3>

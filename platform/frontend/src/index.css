@@ -8,10 +8,10 @@
   --text-primary: #f8fafc; /* Slate 50 */
   --text-secondary: #94a3b8; /* Slate 400 */
   
-  --accent-primary: #38bdf8; /* Soft Blue/Cyan */
-  --accent-primary-hover: #7dd3fc;
+  --accent-primary: #38f894; /* Soft Blue/Cyan */
+  --accent-primary-hover: #46efa0;
   --accent-magenta: #c084fc; /* Purple/Pink */
-  --accent-gradient: linear-gradient(90deg, #d946ef, #6366f1, #06b6d4); /* Pink -> Indigo -> Cyan */
+  --accent-gradient: linear-gradient(90deg, #46efa0, #78c348, #66d49c); /* Pink -> Indigo -> Cyan */
   --glow-effect: rgba(99, 102, 241, 0.35);
   
   --danger-color: #f43f5e; /* Rose 500 */
